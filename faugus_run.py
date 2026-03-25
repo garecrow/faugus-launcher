@@ -289,12 +289,15 @@ class FaugusRun:
                 cmd
             ]
 
+        import os
+
         self.process = subprocess.Popen(
             popen_cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             bufsize=8192,
-            text=True
+            text=True,
+            preexec_fn=os.setsid
         )
 
         self.stdout_watch_id = GLib.io_add_watch(
@@ -783,11 +786,9 @@ class FaugusRun:
 
             if self.process and self.process.poll() is None:
                 try:
-                    parent = psutil.Process(self.process.pid)
-                    for child in parent.children(recursive=True):
-                        child.kill()
-                    parent.kill()
-                except psutil.NoSuchProcess:
+                    pgid = os.getpgid(self.process.pid)
+                    os.killpg(pgid, signal.SIGKILL)
+                except ProcessLookupError:
                     pass
 
         end_time = time.time()
