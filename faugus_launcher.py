@@ -412,7 +412,7 @@ class Main(Gtk.ApplicationWindow):
                         self.button_play.set_image(
                             Gtk.Image.new_from_icon_name("faugus-play-symbolic", Gtk.IconSize.BUTTON))
                     else:
-                        self.menu_play.set_sensitive(False)
+                        self.menu_play.set_sensitive(True)
                         self.button_play.set_sensitive(False)
                         self.button_play.set_image(
                             Gtk.Image.new_from_icon_name("faugus-stop-symbolic", Gtk.IconSize.BUTTON))
@@ -1683,8 +1683,8 @@ class Main(Gtk.ApplicationWindow):
 
             if IS_FLATPAK:
                 if title in self.processos:
-                    self.menu_play.set_sensitive(False)
-                    self.button_play.set_sensitive(False)
+                    self.menu_play.set_sensitive(True)
+                    self.button_play.set_sensitive(True)
                     self.button_play.set_image(
                         Gtk.Image.new_from_icon_name("faugus-stop-symbolic", Gtk.IconSize.BUTTON))
                 else:
@@ -1848,6 +1848,17 @@ class Main(Gtk.ApplicationWindow):
             subprocess.Popen([sys.executable, faugus_run, "--game", game.gameid],cwd=cwd)
             return
 
+        # Add Flatpak specific kill logic here:
+        if IS_FLATPAK and title in self.processos:
+            proc = self.processos[title]
+            if proc:
+                try:
+                    os.kill(proc.pid, signal.SIGUSR1)
+                except ProcessLookupError:
+                    pass
+            return
+
+        # Keep existing non-Flatpak kill logic:
         processos = self.load_processes_from_file()
         self.button_locked[title] = True
 
